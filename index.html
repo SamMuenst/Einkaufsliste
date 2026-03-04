@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Meine Einkaufsliste</title>
+    <style>
+        :root { --primary: #007AFF; --bg: #F2F2F7; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 20px; }
+        h2 { color: #1c1c1e; }
+        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        input, select { padding: 10px; border: 1px solid #ddd; border-radius: 8px; width: calc(100% - 22px); margin-bottom: 10px; font-size: 16px; }
+        button { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; width: 100%; cursor: pointer; }
+        .item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
+        .item.checked { opacity: 0.5; text-decoration: line-through; }
+        .store-tag { font-size: 0.8em; color: #888; background: #eee; padding: 2px 6px; border-radius: 4px; }
+        .delete-btn { color: #FF3B30; font-size: 0.8em; margin-left: 10px; }
+    </style>
+</head>
+<body>
+
+    <h2>🛒 Einkaufsliste</h2>
+
+    <div class="card">
+        <input type="text" id="storeInput" placeholder="Neuer Laden (z.B. Rewe)">
+        <button onclick="addStore()">Laden hinzufügen</button>
+    </div>
+
+    <div class="card">
+        <input type="text" id="itemInput" placeholder="Was musst du kaufen?">
+        <select id="storeSelect"><option value="Allgemein">Allgemein</option></select>
+        <button onclick="addItem()">Hinzufügen</button>
+    </div>
+
+    <div class="card" id="listContainer">
+        <div id="shoppingList"></div>
+    </div>
+
+    <script>
+        let stores = JSON.parse(localStorage.getItem('stores')) || ['Allgemein'];
+        let items = JSON.parse(localStorage.getItem('items')) || [];
+
+        function save() {
+            localStorage.setItem('stores', JSON.stringify(stores));
+            localStorage.setItem('items', JSON.stringify(items));
+            render();
+        }
+
+        function addStore() {
+            const val = document.getElementById('storeInput').value;
+            if (val) { stores.push(val); document.getElementById('storeInput').value = ''; save(); }
+        }
+
+        function addItem() {
+            const name = document.getElementById('itemInput').value;
+            const store = document.getElementById('storeSelect').value;
+            if (name) { items.push({name, store, checked: false}); document.getElementById('itemInput').value = ''; save(); }
+        }
+
+        function toggle(index) { items[index].checked = !items[index].checked; save(); }
+        function deleteItem(index) { items.splice(index, 1); save(); }
+
+        function render() {
+            const select = document.getElementById('storeSelect');
+            select.innerHTML = stores.map(s => `<option value="${s}">${s}</option>`).join('');
+
+            const list = document.getElementById('shoppingList');
+            list.innerHTML = items.map((item, i) => `
+                <div class="item ${item.checked ? 'checked' : ''}">
+                    <span onclick="toggle(${i})">
+                        <strong>${item.name}</strong> <span class="store-tag">${item.store}</span>
+                    </span>
+                    <span class="delete-btn" onclick="deleteItem(${i})">Löschen</span>
+                </div>
+            `).join('');
+        }
+
+        render();
+    </script>
+</body>
+</html>
