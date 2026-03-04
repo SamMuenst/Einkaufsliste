@@ -5,39 +5,53 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Meine Einkaufsliste</title>
     <style>
-        :root { --primary: #007AFF; --bg: #F2F2F7; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 20px; }
-        h2 { color: #1c1c1e; }
-        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        input, select { padding: 10px; border: 1px solid #ddd; border-radius: 8px; width: calc(100% - 22px); margin-bottom: 10px; font-size: 16px; }
-        button { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; width: 100%; cursor: pointer; }
-        .item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
-        .item.checked { opacity: 0.5; text-decoration: line-through; }
-        .store-tag { font-size: 0.8em; color: #888; background: #eee; padding: 2px 6px; border-radius: 4px; }
-        .delete-btn { color: #FF3B30; font-size: 0.8em; margin-left: 10px; }
+        :root { --primary: #007AFF; --danger: #FF3B30; --bg: #F2F2F7; }
+        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); margin: 0; padding: 20px; padding-bottom: 50px; }
+        h2, h3 { color: #1c1c1e; margin-top: 0; }
+        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        input, select { padding: 12px; border: 1px solid #ddd; border-radius: 10px; width: calc(100% - 26px); margin-bottom: 10px; font-size: 16px; -webkit-appearance: none; }
+        button { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 10px; font-weight: 600; width: 100%; cursor: pointer; font-size: 16px; }
+        button.secondary { background: #E5E5EA; color: #007AFF; margin-top: 5px; }
+        
+        .item, .store-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #F2F2F7; }
+        .item:last-child, .store-item:last-child { border-bottom: none; }
+        
+        .item-text { flex-grow: 1; cursor: pointer; }
+        .item.checked .item-text { opacity: 0.4; text-decoration: line-through; }
+        
+        .store-tag { font-size: 0.75em; color: #8E8E93; background: #E5E5EA; padding: 3px 8px; border-radius: 6px; margin-left: 8px; vertical-align: middle; }
+        .delete-btn { color: var(--danger); font-size: 0.9em; font-weight: 500; padding: 5px; cursor: pointer; }
+        
+        .section-title { font-size: 0.9em; font-weight: 600; color: #8E8E93; text-transform: uppercase; margin-bottom: 10px; margin-left: 5px; }
     </style>
 </head>
 <body>
 
     <h2>🛒 Einkaufsliste</h2>
 
-    <div class="card">
-        <input type="text" id="storeInput" placeholder="Neuer Laden (z.B. Rewe)">
-        <button onclick="addStore()">Laden hinzufügen</button>
-    </div>
-
+    <div class="section-title">Hinzufügen</div>
     <div class="card">
         <input type="text" id="itemInput" placeholder="Was musst du kaufen?">
-        <select id="storeSelect"><option value="Allgemein">Allgemein</option></select>
-        <button onclick="addItem()">Hinzufügen</button>
+        <select id="storeSelect"></select>
+        <button onclick="addItem()">In die Liste</button>
     </div>
 
+    <div class="section-title">Deine Liste</div>
     <div class="card" id="listContainer">
         <div id="shoppingList"></div>
     </div>
 
+    <div class="section-title">Läden verwalten</div>
+    <div class="card">
+        <input type="text" id="storeInput" placeholder="Neuer Laden Name">
+        <button onclick="addStore()">Laden hinzufügen</button>
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 15px 0;">
+        <div id="storeList"></div>
+    </div>
+
     <script>
-        let stores = JSON.parse(localStorage.getItem('stores')) || ['Allgemein'];
+        // Daten aus LocalStorage laden
+        let stores = JSON.parse(localStorage.getItem('stores')) || ['Allgemein', 'Supermarkt', 'Drogerie'];
         let items = JSON.parse(localStorage.getItem('items')) || [];
 
         function save() {
@@ -46,35 +60,83 @@
             render();
         }
 
+        // --- Laden Funktionen ---
         function addStore() {
-            const val = document.getElementById('storeInput').value;
-            if (val) { stores.push(val); document.getElementById('storeInput').value = ''; save(); }
+            const input = document.getElementById('storeInput');
+            const val = input.value.trim();
+            if (val && !stores.includes(val)) {
+                stores.push(val);
+                input.value = '';
+                save();
+            }
         }
 
+        function deleteStore(index) {
+            if (stores.length > 1) {
+                if(confirm(`Laden "${stores[index]}" wirklich löschen?`)) {
+                    stores.splice(index, 1);
+                    save();
+                }
+            } else {
+                alert("Ein Laden muss mindestens übrig bleiben!");
+            }
+        }
+
+        // --- Artikel Funktionen ---
         function addItem() {
-            const name = document.getElementById('itemInput').value;
+            const input = document.getElementById('itemInput');
+            const name = input.value.trim();
             const store = document.getElementById('storeSelect').value;
-            if (name) { items.push({name, store, checked: false}); document.getElementById('itemInput').value = ''; save(); }
+            if (name) {
+                items.push({name, store, checked: false});
+                input.value = '';
+                save();
+            }
         }
 
-        function toggle(index) { items[index].checked = !items[index].checked; save(); }
-        function deleteItem(index) { items.splice(index, 1); save(); }
+        function toggleItem(index) {
+            items[index].checked = !items[index].checked;
+            save();
+        }
 
+        function deleteItem(index) {
+            items.splice(index, 1);
+            save();
+        }
+
+        // --- Oberfläche zeichnen ---
         function render() {
+            // Dropdown für Läden aktualisieren
             const select = document.getElementById('storeSelect');
             select.innerHTML = stores.map(s => `<option value="${s}">${s}</option>`).join('');
 
-            const list = document.getElementById('shoppingList');
-            list.innerHTML = items.map((item, i) => `
-                <div class="item ${item.checked ? 'checked' : ''}">
-                    <span onclick="toggle(${i})">
-                        <strong>${item.name}</strong> <span class="store-tag">${item.store}</span>
-                    </span>
-                    <span class="delete-btn" onclick="deleteItem(${i})">Löschen</span>
+            // Liste der Läden (zum Löschen) aktualisieren
+            const storeListDiv = document.getElementById('storeList');
+            storeListDiv.innerHTML = stores.map((s, i) => `
+                <div class="store-item">
+                    <span>${s}</span>
+                    <span class="delete-btn" onclick="deleteStore(${i})">Löschen</span>
                 </div>
             `).join('');
+
+            // Einkaufsliste aktualisieren
+            const list = document.getElementById('shoppingList');
+            if (items.length === 0) {
+                list.innerHTML = '<p style="color: #888; text-align: center;">Deine Liste ist leer.</p>';
+            } else {
+                list.innerHTML = items.map((item, i) => `
+                    <div class="item ${item.checked ? 'checked' : ''}">
+                        <div class="item-text" onclick="toggleItem(${i})">
+                            <strong>${item.name}</strong> 
+                            <span class="store-tag">${item.store}</span>
+                        </div>
+                        <span class="delete-btn" onclick="deleteItem(${i})">✕</span>
+                    </div>
+                `).join('');
+            }
         }
 
+        // Initiales Rendern beim Laden der Seite
         render();
     </script>
 </body>
